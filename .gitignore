@@ -1,0 +1,9 @@
+bin/
+obj/
+*.user
+
+# Generated sheet music. img/ holds resources embedded in the binary and doc/
+# holds images used by the README, so both stay tracked.
+*.png
+!img/*.png
+!doc/*.png
