@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>sheet</AssemblyName>
+    <RootNamespace>MidiSheetMusic</RootNamespace>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <!-- System.Drawing.Common is Windows-only from .NET 7 on; CA1416 flags every
+         call. The Unix path is enabled deliberately (see runtimeconfig.template.json). -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 6.0.0 is the last version whose Unix GDI+ support can be re-enabled via
+         the System.Drawing.EnableUnixSupport runtime switch. Do not bump this
+         without porting the drawing code off System.Drawing. -->
+    <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- MidiPlayer.cs and NoteColorDialog.cs need System.Windows.Forms and are
+         part of the upstream GUI, not this command line tool. -->
+    <Compile Include="src/*.cs"
+             Exclude="src/MidiPlayer.cs;src/NoteColorDialog.cs" />
+  </ItemGroup>
+
+  <!-- System.Drawing probes <appdir>/runtimes/unix/lib/net6.0 for libgdiplus but
+       not Homebrew's lib dir, so staging a copy there is what lets the tool run
+       without callers having to export DYLD_LIBRARY_PATH.
+       Install it with: brew install mono-libgdiplus -->
+  <ItemGroup>
+    <None Include="/opt/homebrew/lib/libgdiplus.dylib"
+          Condition="Exists('/opt/homebrew/lib/libgdiplus.dylib')"
+          Link="runtimes/unix/lib/net6.0/libgdiplus.dylib"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest" />
+    <None Include="/usr/local/lib/libgdiplus.dylib"
+          Condition="!Exists('/opt/homebrew/lib/libgdiplus.dylib') And Exists('/usr/local/lib/libgdiplus.dylib')"
+          Link="runtimes/unix/lib/net6.0/libgdiplus.dylib"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Loaded at runtime by `new Bitmap(typeof(ClefSymbol), "treble.png")`,
+         which looks the resource up as MidiSheetMusic.<file>. -->
+    <EmbeddedResource Include="img/*.png"
+                      LogicalName="MidiSheetMusic.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="img/NotePair.ico"
+                      LogicalName="MidiSheetMusic.NotePair.ico" />
+  </ItemGroup>
+
+</Project>
